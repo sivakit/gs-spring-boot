@@ -1,0 +1,42 @@
+trigger:
+- master
+
+variables:
+
+  # Azure Resource Manager connection created during pipeline creation
+  azureSubscription: '4c8e7db9-7472-409e-8b5a-49c63cab73e1'
+  
+  # Web app name
+  webAppName: 'java-spring-boot'
+
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
+  
+steps:
+- stage: Build
+  displayName: Build stage
+  jobs:
+  - job: MavenPackageAndPublishArtifacts
+    displayName: Maven Package and Publish Artifacts
+    pool:
+      vmImage: $(vmImageName)
+
+    steps:
+    - task: Build
+      displayName: 'Maven app/pom.xml'
+      inputs:
+      	mavenPomFile: '$(Parameters.mavenPOMFile)'
+      	codeCoverageToolOption: Cobertura
+      
+    - task: CopyFiles@2
+      displayName: 'Copy Files to: $(build.artifactstagingdirectory)'
+      inputs:
+      	SourceFolder: '$(system.defaultworkingdirectory)'
+      	Contents: '**/*.jar'
+      	TargetFolder: '$(build.artifactstagingdirectory)'
+      
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Artifact: drop'
+      inputs:
+      	PathtoPublish: '$(build.artifactstagingdirectory)'
+
